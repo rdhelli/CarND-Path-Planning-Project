@@ -144,7 +144,7 @@ int main() {
           ptsy.push_back(next_wp1[1]);
           ptsy.push_back(next_wp2[1]);
           
-          for (int = 0; i < ptsx.size(); i++) {
+          for (int i = 0; i < ptsx.size(); i++) {
             // shift car reference angle to 0 degrees
             double shift_x = ptsx[i]-ref_x;
             double shift_y = ptsy[i]-ref_y;
@@ -175,7 +175,7 @@ int main() {
           
           // fill up the rest of our path planner, after the previous points, up to 50
           for (int i = 1; i <= 50 - prev_size; i++) {
-            double N = target_dist/(.02*ref_vel/2.24));
+            double N = target_dist/(.02*ref_vel/2.24);
             double x_point = x_add_on + target_x / N;
             double y_point = s(x_point);
             x_add_on = x_point;
