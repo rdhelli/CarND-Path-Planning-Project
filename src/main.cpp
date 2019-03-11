@@ -56,7 +56,7 @@ int main() {
   int lane = 1;
   
   // have a reference velocity to target
-  double ref_vel = 49.5; // mph
+  double ref_vel = 0.0; // mph
   // END OF TODO
   
   h.onMessage([&ref_vel,&map_waypoints_x,&map_waypoints_y,&map_waypoints_s,
@@ -98,6 +98,45 @@ int main() {
           
           // TODO: define a path made up of (x,y) points that the car will visit
 
+          int prev_size = previous_path_x.size();
+          
+          if (prev_size > 0) {
+            car_s = end_path_s;
+          }
+          bool too_close = false;
+          
+          // find ref_v to use
+          for (int i = 0; i < sensor_fusion.size(); i++) {
+            // car is in my lane
+            float d = sensor_fusion[i][6];
+            if (d < (2 + 4*lane + 2) && d > (2 + 4*lane - 2)) {
+              double vx = sensor_fusion[i][3];
+              double vy = sensor_fusion[i][4];
+              double check_speed = sqrt(vx*vx + vy*vy);
+              double check_car_s = sensor_fusion[i][5];
+              // project s value to the next cycle
+              check_car_s += (double)prev_size * .02 * check_speed;
+              // check s values greater than mine and less than an s gap
+              if (check_car_s > car_s && check_car_s - car_s < 30){
+                // TODO logic here
+                // ref_vel = 29.5; // mph
+                too_close = true;
+                if (lane > 0) {
+                  lane = 0;
+                } else if (lane == 0) {
+                  lane = 1;
+                }
+              }
+            }
+          }
+          
+          if (too_close) {
+            ref_vel -= .224;
+          } else if (ref_vel < 49.5) {
+            ref_vel += .224;
+          }
+          
+          
           // Create a list of widely spaced (x,y) waypoints, evenly spaced at 30m
           vector<double> ptsx;
           vector<double> ptsy;
@@ -107,7 +146,6 @@ int main() {
           double ref_y = car_y;
           double ref_yaw = deg2rad(car_yaw);
 
-          int prev_size = previous_path_x.size();          
           // if previous size is almost empty, use the car as starting reference
           if(prev_size < 2){
             // use 2 points that make the path tangent to the car
@@ -117,9 +155,7 @@ int main() {
             ptsx.push_back(car_x);
             ptsy.push_back(prev_car_y);
             ptsy.push_back(car_y);
-          }
-          // use the previous path's end point as starting reference
-          else {
+          } else { // use the previous path's end point as starting reference
             // redefine reference state as previous path end point
             ref_x = previous_path_x[prev_size-1];
             ref_y = previous_path_y[prev_size-1];
