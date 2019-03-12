@@ -14,6 +14,76 @@ using nlohmann::json;
 using std::string;
 using std::vector;
 
+
+// returns the closes vehicle in a given lane, that is within a distance buffer either forward or backward
+vector<double> get_vehicle(double s,
+                           int lane,
+                           vector<vector<double>> sensor_fusion,
+                           int prev_size,
+                           double buffer) {
+  // find ref_v to use
+  vector<vector<double>> found_vehicles;
+  for (int i = 0; i < sensor_fusion.size(); i++) {
+    // car is in my lane
+    float d = sensor_fusion[i][6];
+    if (d < (2 + 4*lane + 2) && d > (2 + 4*lane - 2)) {
+      double vx = sensor_fusion[i][3];
+      double vy = sensor_fusion[i][4];
+      double check_speed = sqrt(vx*vx + vy*vy);
+      double check_car_s = sensor_fusion[i][5];
+      // project s value to the next cycle
+      check_car_s += (double)prev_size * .02 * check_speed;
+      // check s values greater than mine and less than an s gap
+      // checking vehicles ahead
+      if (buffer >= 0 && check_car_s > s && check_car_s - s < buffer){
+        found_vehicles.push_back(sensor_fusion[i]);
+      }
+      // buffer < 0, checking vehicles behind
+      else if (check_car_s < s && s - check_car_s < buffer){
+        found_vehicles.push_back(sensor_fusion[i]);
+      }
+    }
+  }
+  // sort found vehicles based on s value
+  if (buffer >=0) { // vehicles ahead of us
+    std::sort(found_vehicles.begin(),
+              found_vehicles.end(),
+              [](const vector<double>& veh1, vector<double>& veh2) {
+      return veh1[5] < veh2[5]; // ascending order based on s, hence first element is closest
+    });
+  } else { // vehicles behind us
+    std::sort(found_vehicles.begin(),
+              found_vehicles.end(),
+              [](const vector<double>& veh1, vector<double>& veh2) {
+      return veh1[5] > veh2[5]; // descending order based on s, hence first element is closest
+    });
+  }
+  vector<double> empty;
+  if (found_vehicles.size() > 0) return found_vehicles.front();
+  else return empty;
+}
+// Decides reference velocity and best lane, based on sensor fusion information
+void behavior(double s,
+              double d,
+              vector<vector<double>> sensor_fusion,
+              double &ref_vel,
+              int &lane,
+              int prev_size,
+              double buffer = 30.0) {
+
+  vector<double> front_car = get_vehicle(s, lane, sensor_fusion, prev_size, buffer);
+  
+  if (!front_car.empty()) {
+    double front_speed = sqrt(front_car[3]*front_car[3] + front_car[4]*front_car[4]);
+    if (ref_vel/2.24 > front_speed) {
+      ref_vel -= .224;
+    }
+  }
+  else if (ref_vel < 49.5) {
+    ref_vel += .224;
+  }
+}
+
 int main() {
   uWS::Hub h;
 
@@ -103,39 +173,8 @@ int main() {
           if (prev_size > 0) {
             car_s = end_path_s;
           }
-          bool too_close = false;
-          
-          // find ref_v to use
-          for (int i = 0; i < sensor_fusion.size(); i++) {
-            // car is in my lane
-            float d = sensor_fusion[i][6];
-            if (d < (2 + 4*lane + 2) && d > (2 + 4*lane - 2)) {
-              double vx = sensor_fusion[i][3];
-              double vy = sensor_fusion[i][4];
-              double check_speed = sqrt(vx*vx + vy*vy);
-              double check_car_s = sensor_fusion[i][5];
-              // project s value to the next cycle
-              check_car_s += (double)prev_size * .02 * check_speed;
-              // check s values greater than mine and less than an s gap
-              if (check_car_s > car_s && check_car_s - car_s < 30){
-                // TODO logic here
-                // ref_vel = 29.5; // mph
-                too_close = true;
-                if (lane > 0) {
-                  lane = 0;
-                } else if (lane == 0) {
-                  lane = 1;
-                }
-              }
-            }
-          }
-          
-          if (too_close) {
-            ref_vel -= .224;
-          } else if (ref_vel < 49.5) {
-            ref_vel += .224;
-          }
-          
+
+          behavior(car_s, car_d, sensor_fusion, &ref_vel, &lane, prev_size);
           
           // Create a list of widely spaced (x,y) waypoints, evenly spaced at 30m
           vector<double> ptsx;
