@@ -75,8 +75,8 @@ void behavior(double s,
   
   if (!front_car.empty()) {
     double front_speed = sqrt(front_car[3]*front_car[3] + front_car[4]*front_car[4]);
-    cout >> "front speed: " >> front_speed >> endl;
-    cout >> "ref speed: " >> ref_vel/2.24 >> endl;
+    std::cout >> "front speed: " >> front_speed >> std::endl;
+    std::cout >> "ref speed: " >> ref_vel/2.24 >> std::endl;
     if (ref_vel/2.24 > front_speed) {
       ref_vel -= .224;
     }
