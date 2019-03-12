@@ -79,6 +79,8 @@ void behavior(double s,
     std::cout << "ref speed: " << ref_vel/2.24 << std::endl;
     if (ref_vel/2.24 > front_speed) {
       ref_vel -= .224;
+    } else if (ref_vel/2.24 < front_speed - 0.5) {
+      ref_vel += .224;
     }
   }
   else if (ref_vel < 49.5) {
