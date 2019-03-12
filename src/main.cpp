@@ -174,7 +174,7 @@ int main() {
             car_s = end_path_s;
           }
 
-          behavior(car_s, car_d, sensor_fusion, &ref_vel, &lane, prev_size);
+          behavior(car_s, car_d, sensor_fusion, ref_vel, lane, prev_size);
           
           // Create a list of widely spaced (x,y) waypoints, evenly spaced at 30m
           vector<double> ptsx;
