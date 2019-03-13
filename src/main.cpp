@@ -20,7 +20,7 @@ double get_vehicle_speed(vector<double> vehicle) {
 }
 
 // returns the predicted distance in 's' coordinate to a vehicle
-double get_vehicle_dist(vector<double> vehicle, s, prev_size) {
+double get_vehicle_dist(vector<double> vehicle, double s, int prev_size) {
   return ((vehicle[5] + (double)prev_size * .02 * get_vehicle_speed(vehicle)) - s);
 }
 
