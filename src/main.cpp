@@ -15,7 +15,7 @@ using std::string;
 using std::vector;
 
 
-// returns the closes vehicle in a given lane, that is within a distance buffer either forward or backward
+// returns the closest vehicle in a given lane, that is within a distance buffer either forward or backward
 vector<double> get_vehicle(double s,
                            int lane,
                            vector<vector<double>> sensor_fusion,
@@ -32,7 +32,7 @@ vector<double> get_vehicle(double s,
       double check_speed = sqrt(vx*vx + vy*vy);
       double check_car_s = sensor_fusion[i][5];
       // project s value to the next cycle
-      check_car_s += (double)prev_size * .02 * check_speed;
+      // check_car_s += (double)prev_size * .02 * check_speed;
       // check s values greater than mine and less than an s gap
       // checking vehicles ahead
       if (buffer >= 0 && check_car_s > s && check_car_s - s < buffer){
@@ -175,9 +175,9 @@ int main() {
 
           int prev_size = previous_path_x.size();
           
-          if (prev_size > 0) {
-            car_s = end_path_s;
-          }
+          // if (prev_size > 0) {
+          //   car_s = end_path_s;
+          // }
 
           behavior(car_s, car_d, sensor_fusion, ref_vel, lane, prev_size);
           
