@@ -37,7 +37,7 @@ vector<double> get_vehicle(double s,
     float d = sensor_fusion[i][6];
     if (d < (2 + 4*lane + 2) && d > (2 + 4*lane - 2)) {
       double check_speed = get_vehicle_speed(sensor_fusion[i]);
-      double check_dist = get_vehicle_dist(sensor_fusion[i], s, prev_size)
+      double check_dist = get_vehicle_dist(sensor_fusion[i], s, prev_size);
       // check s values greater than mine and less than an s gap
       // checking vehicles ahead
       if (buffer >= 0 && check_dist > 0 && check_dist < buffer){
