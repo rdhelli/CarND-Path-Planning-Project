@@ -77,7 +77,7 @@ void behavior(double s,
               int &lane,
               int prev_size,
               double buffer = 30.0,
-              double w_dist = 0.5,
+              double w_dist = 50,
               double w_speed = 1.0,
               double w_stay = 3.0) {
 
@@ -93,16 +93,16 @@ void behavior(double s,
   double right_cost = 0.0;
   
   if (!left_front_car.empty()) {
-    left_cost += w_speed * (23.0 - get_vehicle_speed(left_front_car));
-    left_cost -= w_dist * get_vehicle_dist(left_front_car, s, prev_size);
+    left_cost += w_speed * (49.5 - 2.24*get_vehicle_speed(left_front_car));
+    left_cost += w_dist / get_vehicle_dist(left_front_car, s, prev_size);
   }
   if (!mid_front_car.empty()) {
-    mid_cost += w_speed * (23.0 - get_vehicle_speed(mid_front_car));
-    mid_cost -= w_dist * get_vehicle_dist(mid_front_car, s, prev_size);
+    mid_cost += w_speed * (49.5 - 2.24*get_vehicle_speed(mid_front_car));
+    mid_cost += w_dist / get_vehicle_dist(mid_front_car, s, prev_size);
   }
   if (!right_front_car.empty()) {
-    right_cost += w_speed * (23.0 - get_vehicle_speed(right_front_car));
-    right_cost -= w_dist * get_vehicle_dist(right_front_car, s, prev_size);
+    right_cost += w_speed * (49.5 - 2.24*get_vehicle_speed(right_front_car));
+    right_cost += w_dist / get_vehicle_dist(right_front_car, s, prev_size);
   }
   if (lane == 0) left_cost -= w_stay;
   if (lane == 1) mid_cost -= w_stay;
