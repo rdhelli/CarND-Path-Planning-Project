@@ -77,16 +77,16 @@ void behavior(double s,
               int &lane,
               int prev_size,
               double buffer = 30.0,
-              double w_dist = 50,
+              double w_dist = 40.0,
               double w_speed = 1.0,
-              double w_stay = 3.0) {
+              double w_stay = 5.0) {
 
   vector<double> left_front_car = get_vehicle(s, 0, sensor_fusion, prev_size, buffer);
   vector<double> mid_front_car = get_vehicle(s, 1, sensor_fusion, prev_size, buffer);
   vector<double> right_front_car = get_vehicle(s, 2, sensor_fusion, prev_size, buffer);
-  vector<double> left_back_car = get_vehicle(s, 0, sensor_fusion, prev_size, -buffer/3);
-  vector<double> mid_back_car = get_vehicle(s, 1, sensor_fusion, prev_size, -buffer/3);
-  vector<double> right_back_car = get_vehicle(s, 2, sensor_fusion, prev_size, -buffer/3);
+  vector<double> left_back_car = get_vehicle(s, 0, sensor_fusion, prev_size, -buffer/6);
+  vector<double> mid_back_car = get_vehicle(s, 1, sensor_fusion, prev_size, -buffer/6);
+  vector<double> right_back_car = get_vehicle(s, 2, sensor_fusion, prev_size, -buffer/6);
   
   double left_cost = 0.0;
   double mid_cost = 0.0;
