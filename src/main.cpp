@@ -73,7 +73,6 @@ void behavior(double s,
               double buffer = 30.0) {
 
   vector<double> front_car = get_vehicle(s, lane, sensor_fusion, prev_size, buffer);
-  std::cout << front_car << std::endl;
   
   if (!front_car.empty()) {
     double front_speed = sqrt(front_car[3]*front_car[3] + front_car[4]*front_car[4]);
