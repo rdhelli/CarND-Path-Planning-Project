@@ -27,9 +27,7 @@ vector<double> get_vehicle(double s,
     // car is in my lane
     float d = sensor_fusion[i][6];
     if (d < (2 + 4*lane + 2) && d > (2 + 4*lane - 2)) {
-      double vx = sensor_fusion[i][3];
-      double vy = sensor_fusion[i][4];
-      double check_speed = sqrt(vx*vx + vy*vy);
+      double check_speed = get_vehicle_speed(sensor_fusion[i]);
       double check_car_s = sensor_fusion[i][5];
       // project s value to the next cycle
       check_car_s += (double)prev_size * .02 * check_speed;
@@ -59,10 +57,15 @@ vector<double> get_vehicle(double s,
     });
   }
   vector<double> empty;
-  std::cout << "found vehicles" << found_vehicles.size() << std::endl;
+  // std::cout << "found vehicles " << found_vehicles.size() << std::endl;
   if (found_vehicles.size() > 0) return found_vehicles.front();
   else return empty;
 }
+
+double get_vehicle_speed(vector<double> vehicle) {
+  return sqrt(vehicle[3]*vehicle[3] + vehicle[4]*vehicle[4]);
+}
+
 // Decides reference velocity and best lane, based on sensor fusion information
 void behavior(double s,
               double d,
@@ -72,15 +75,37 @@ void behavior(double s,
               int prev_size,
               double buffer = 30.0) {
 
-  vector<double> front_car = get_vehicle(s, lane, sensor_fusion, prev_size, buffer);
+  vector<double> left_front_car = get_vehicle(s, 0, sensor_fusion, prev_size, buffer);
+  vector<double> mid_front_car = get_vehicle(s, 1, sensor_fusion, prev_size, buffer);
+  vector<double> right_front_car = get_vehicle(s, 2, sensor_fusion, prev_size, buffer);
+  vector<double> left_back_car = get_vehicle(s, 0, sensor_fusion, prev_size, -buffer/3);
+  vector<double> mid_back_car = get_vehicle(s, 1, sensor_fusion, prev_size, -buffer/3);
+  vector<double> right_back_car = get_vehicle(s, 2, sensor_fusion, prev_size, -buffer/3);
   
-  if (!front_car.empty()) {
-    double front_speed = sqrt(front_car[3]*front_car[3] + front_car[4]*front_car[4]);
-    std::cout << "front speed: " << front_speed << std::endl;
-    std::cout << "ref speed: " << ref_vel/2.24 << std::endl;
-    if (ref_vel/2.24 > front_speed) {
+  double left_cost = 0.0;
+  double mid_cost = 0.0;
+  double right_cost = 0.0;
+  
+  if (!left_front_car.empty()) left_cost += 49.5 - get_vehicle_speed(left_front_car);
+  if (!mid_front_car.empty()) mid_cost += 49.5 - get_vehicle_speed(mid_front_car);
+  if (!right_front_car.empty()) right_cost += 49.5 - get_vehicle_speed(right_front_car);
+  if (lane == 0) left_cost -= 3;
+  if (lane == 1) mid_cost -= 3;
+  if (lane == 2) right_cost -= 3;
+  
+  // it's possible and worth changing lanes to right
+  if (lane == 0 && mid_cost < left_cost && mid_back_car.empty()) lane++;
+  if (lane == 1 && right_cost < mid_cost && right_cost < left_cost && right_back_car.empty()) lane++;
+  // it's possible and worth changing lanes to left
+  if (lane == 2 && mid_cost < right_cost && mid_back_car.empty()) lane--;
+  if (lane == 1 && left_cost < mid_cost && left_cost < right_cost && left_back_car.empty()) lane--;
+  
+  vector<double> target_vehicle = get_vehicle(s, lane, sensor_fusion, prev_size, buffer);
+  if (!target_vehicle.empty()) {
+    double target_speed = get_vehicle_speed(target_vehicle);
+    if (ref_vel/2.24 > target_speed) {
       ref_vel -= .224;
-    } else if (ref_vel/2.24 < front_speed - 0.5) {
+    } else if (ref_vel/2.24 < target_speed - 0.5) {
       ref_vel += .224;
     }
   }
