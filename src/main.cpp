@@ -32,14 +32,14 @@ vector<double> get_vehicle(double s,
       double check_speed = sqrt(vx*vx + vy*vy);
       double check_car_s = sensor_fusion[i][5];
       // project s value to the next cycle
-      // check_car_s += (double)prev_size * .02 * check_speed;
+      check_car_s += (double)prev_size * .02 * check_speed;
       // check s values greater than mine and less than an s gap
       // checking vehicles ahead
       if (buffer >= 0 && check_car_s > s && check_car_s - s < buffer){
         found_vehicles.push_back(sensor_fusion[i]);
       }
       // buffer < 0, checking vehicles behind
-      else if (check_car_s < s && s - check_car_s < buffer){
+      else if (buffer < 0 && check_car_s < s && s - check_car_s < buffer){
         found_vehicles.push_back(sensor_fusion[i]);
       }
     }
@@ -59,7 +59,7 @@ vector<double> get_vehicle(double s,
     });
   }
   vector<double> empty;
-  std::cout << "found vehicles " << found_vehicles.size() << std::endl;
+  std::cout << "found vehicles" << found_vehicles.size() << std::endl;
   if (found_vehicles.size() > 0) return found_vehicles.front();
   else return empty;
 }
@@ -76,8 +76,8 @@ void behavior(double s,
   
   if (!front_car.empty()) {
     double front_speed = sqrt(front_car[3]*front_car[3] + front_car[4]*front_car[4]);
-    // std::cout << "front speed: " << front_speed << std::endl;
-    // std::cout << "ref speed: " << ref_vel/2.24 << std::endl;
+    std::cout << "front speed: " << front_speed << std::endl;
+    std::cout << "ref speed: " << ref_vel/2.24 << std::endl;
     if (ref_vel/2.24 > front_speed) {
       ref_vel -= .224;
     } else if (ref_vel/2.24 < front_speed - 0.5) {
@@ -175,9 +175,9 @@ int main() {
 
           int prev_size = previous_path_x.size();
           std::cout << prev_size << std::endl;
-          // if (prev_size > 0) {
-          //   car_s = end_path_s;
-          // }
+          if (prev_size > 0) {
+            car_s = end_path_s;
+          }
 
           behavior(car_s, car_d, sensor_fusion, ref_vel, lane, prev_size);
           
