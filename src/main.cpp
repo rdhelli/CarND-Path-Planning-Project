@@ -32,7 +32,7 @@ vector<double> get_vehicle(double s,
       double check_speed = sqrt(vx*vx + vy*vy);
       double check_car_s = sensor_fusion[i][5];
       // project s value to the next cycle
-      // check_car_s += (double)prev_size * .02 * check_speed;
+      check_car_s += (double)prev_size * .02 * check_speed;
       // check s values greater than mine and less than an s gap
       // checking vehicles ahead
       if (buffer >= 0 && check_car_s > s && check_car_s - s < buffer){
@@ -45,7 +45,7 @@ vector<double> get_vehicle(double s,
     }
   }
   // sort found vehicles based on s value
-  if (buffer >=0) { // vehicles ahead of us
+  if (buffer >= 0) { // vehicles ahead of us
     std::sort(found_vehicles.begin(),
               found_vehicles.end(),
               [](const vector<double>& veh1, vector<double>& veh2) {
@@ -59,6 +59,7 @@ vector<double> get_vehicle(double s,
     });
   }
   vector<double> empty;
+  std::cout << "found vehicles" << found_vehicles.size() << std::endl;
   if (found_vehicles.size() > 0) return found_vehicles.front();
   else return empty;
 }
@@ -72,6 +73,7 @@ void behavior(double s,
               double buffer = 30.0) {
 
   vector<double> front_car = get_vehicle(s, lane, sensor_fusion, prev_size, buffer);
+  std::cout << front_car << std::endl;
   
   if (!front_car.empty()) {
     double front_speed = sqrt(front_car[3]*front_car[3] + front_car[4]*front_car[4]);
@@ -174,9 +176,9 @@ int main() {
 
           int prev_size = previous_path_x.size();
           
-          // if (prev_size > 0) {
-          //   car_s = end_path_s;
-          // }
+          if (prev_size > 0) {
+            car_s = end_path_s;
+          }
 
           behavior(car_s, car_d, sensor_fusion, ref_vel, lane, prev_size);
           
