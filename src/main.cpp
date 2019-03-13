@@ -19,6 +19,11 @@ double get_vehicle_speed(vector<double> vehicle) {
   return sqrt(vehicle[3]*vehicle[3] + vehicle[4]*vehicle[4]);
 }
 
+// returns the predicted distance in 's' coordinate to a vehicle
+double get_vehicle_dist(vector<double> vehicle, s, prev_size) {
+  return ((vehicle[5] + (double)prev_size * .02 * get_vehicle_speed(vehicle)) - s);
+}
+
 // returns the closest vehicle in a given lane, that is within a distance buffer either forward or backward
 vector<double> get_vehicle(double s,
                            int lane,
@@ -32,16 +37,14 @@ vector<double> get_vehicle(double s,
     float d = sensor_fusion[i][6];
     if (d < (2 + 4*lane + 2) && d > (2 + 4*lane - 2)) {
       double check_speed = get_vehicle_speed(sensor_fusion[i]);
-      double check_car_s = sensor_fusion[i][5];
-      // project s value to the next cycle
-      check_car_s += (double)prev_size * .02 * check_speed;
+      double check_dist = get_vehicle_dist(sensor_fusion[i], s, prev_size)
       // check s values greater than mine and less than an s gap
       // checking vehicles ahead
-      if (buffer >= 0 && check_car_s > s && check_car_s - s < buffer){
+      if (buffer >= 0 && check_dist > 0 && check_dist < buffer){
         found_vehicles.push_back(sensor_fusion[i]);
       }
       // buffer < 0, checking vehicles behind
-      else if (buffer < 0 && check_car_s < s && s - check_car_s < buffer){
+      else if (buffer < 0 && check_dist < 0 && -1*check_dist < buffer){
         found_vehicles.push_back(sensor_fusion[i]);
       }
     }
@@ -73,7 +76,10 @@ void behavior(double s,
               double &ref_vel,
               int &lane,
               int prev_size,
-              double buffer = 30.0) {
+              double buffer = 30.0,
+              double w_dist = 0.5,
+              double w_speed = 1.0,
+              double w_stay = 3.0) {
 
   vector<double> left_front_car = get_vehicle(s, 0, sensor_fusion, prev_size, buffer);
   vector<double> mid_front_car = get_vehicle(s, 1, sensor_fusion, prev_size, buffer);
@@ -86,12 +92,21 @@ void behavior(double s,
   double mid_cost = 0.0;
   double right_cost = 0.0;
   
-  if (!left_front_car.empty()) left_cost += 49.5 - get_vehicle_speed(left_front_car);
-  if (!mid_front_car.empty()) mid_cost += 49.5 - get_vehicle_speed(mid_front_car);
-  if (!right_front_car.empty()) right_cost += 49.5 - get_vehicle_speed(right_front_car);
-  if (lane == 0) left_cost -= 3;
-  if (lane == 1) mid_cost -= 3;
-  if (lane == 2) right_cost -= 3;
+  if (!left_front_car.empty()) {
+    left_cost += w_speed * (23.0 - get_vehicle_speed(left_front_car));
+    left_cost -= w_dist * get_vehicle_dist(left_front_car, s, prev_size);
+  }
+  if (!mid_front_car.empty()) {
+    mid_cost += w_speed * (23.0 - get_vehicle_speed(mid_front_car));
+    mid_cost -= w_dist * get_vehicle_dist(mid_front_car, s, prev_size);
+  }
+  if (!right_front_car.empty()) {
+    right_cost += w_speed * (23.0 - get_vehicle_speed(right_front_car));
+    right_cost -= w_dist * get_vehicle_dist(right_front_car, s, prev_size);
+  }
+  if (lane == 0) left_cost -= w_stay;
+  if (lane == 1) mid_cost -= w_stay;
+  if (lane == 2) right_cost -= w_stay;
   
   // it's possible and worth changing lanes to right
   if (lane == 0 && mid_cost < left_cost && mid_back_car.empty()) lane++;
