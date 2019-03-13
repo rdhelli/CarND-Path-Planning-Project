@@ -14,6 +14,10 @@ using nlohmann::json;
 using std::string;
 using std::vector;
 
+// returns the absolute velocity of a vehicle
+double get_vehicle_speed(vector<double> vehicle) {
+  return sqrt(vehicle[3]*vehicle[3] + vehicle[4]*vehicle[4]);
+}
 
 // returns the closest vehicle in a given lane, that is within a distance buffer either forward or backward
 vector<double> get_vehicle(double s,
@@ -60,10 +64,6 @@ vector<double> get_vehicle(double s,
   // std::cout << "found vehicles " << found_vehicles.size() << std::endl;
   if (found_vehicles.size() > 0) return found_vehicles.front();
   else return empty;
-}
-
-double get_vehicle_speed(vector<double> vehicle) {
-  return sqrt(vehicle[3]*vehicle[3] + vehicle[4]*vehicle[4]);
 }
 
 // Decides reference velocity and best lane, based on sensor fusion information
