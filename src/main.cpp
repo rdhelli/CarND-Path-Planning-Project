@@ -108,6 +108,8 @@ void behavior(double s,
   if (lane == 1) mid_cost -= w_stay;
   if (lane == 2) right_cost -= w_stay;
   
+  std::cout << left_cost << " " << mid_cost << " " << right_cost << std::endl;
+  
   // it's possible and worth changing lanes to right
   if (lane == 0 && mid_cost < left_cost && mid_back_car.empty()) lane++;
   if (lane == 1 && right_cost < mid_cost && right_cost < left_cost && right_back_car.empty()) lane++;
@@ -214,7 +216,6 @@ int main() {
           // TODO: define a path made up of (x,y) points that the car will visit
 
           int prev_size = previous_path_x.size();
-          std::cout << prev_size << std::endl;
           if (prev_size > 0) {
             car_s = end_path_s;
           }
