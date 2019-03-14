@@ -44,7 +44,7 @@ vector<double> get_vehicle(double s,
         found_vehicles.push_back(sensor_fusion[i]);
       }
       // buffer < 0, checking vehicles behind
-      else if (buffer < 0 && check_dist < 0 && check_dist < buffer){
+      else if (buffer < 0 && check_dist < 0 && check_dist > buffer){
         found_vehicles.push_back(sensor_fusion[i]);
       }
     }
@@ -85,9 +85,9 @@ void behavior(double s,
   vector<double> left_front_car = get_vehicle(s, 0, sensor_fusion, prev_size, buffer);
   vector<double> mid_front_car = get_vehicle(s, 1, sensor_fusion, prev_size, buffer);
   vector<double> right_front_car = get_vehicle(s, 2, sensor_fusion, prev_size, buffer);
-  vector<double> left_back_car = get_vehicle(s, 0, sensor_fusion, prev_size, -buffer/6);
-  vector<double> mid_back_car = get_vehicle(s, 1, sensor_fusion, prev_size, -buffer/6);
-  vector<double> right_back_car = get_vehicle(s, 2, sensor_fusion, prev_size, -buffer/6);
+  vector<double> left_back_car = get_vehicle(s, 0, sensor_fusion, prev_size, -buffer/3);
+  vector<double> mid_back_car = get_vehicle(s, 1, sensor_fusion, prev_size, -buffer/3);
+  vector<double> right_back_car = get_vehicle(s, 2, sensor_fusion, prev_size, -buffer/3);
   
   double left_cost = 0.0;
   double mid_cost = 0.0;
