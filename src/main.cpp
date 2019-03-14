@@ -85,9 +85,9 @@ void behavior(double s,
   vector<double> left_front_car = get_vehicle(s, 0, sensor_fusion, prev_size, buffer);
   vector<double> mid_front_car = get_vehicle(s, 1, sensor_fusion, prev_size, buffer);
   vector<double> right_front_car = get_vehicle(s, 2, sensor_fusion, prev_size, buffer);
-  vector<double> left_back_car = get_vehicle(s, 0, sensor_fusion, prev_size, -buffer/3);
-  vector<double> mid_back_car = get_vehicle(s, 1, sensor_fusion, prev_size, -buffer/3);
-  vector<double> right_back_car = get_vehicle(s, 2, sensor_fusion, prev_size, -buffer/3);
+  vector<double> left_back_car = get_vehicle(s, 0, sensor_fusion, prev_size, -buffer/6);
+  vector<double> mid_back_car = get_vehicle(s, 1, sensor_fusion, prev_size, -buffer/6);
+  vector<double> right_back_car = get_vehicle(s, 2, sensor_fusion, prev_size, -buffer/6);
   
   double left_cost = 0.0;
   double mid_cost = 0.0;
@@ -116,11 +116,11 @@ void behavior(double s,
   std::cout << left_cost << " " << mid_cost << " " << right_cost << std::endl;
 
   // it's possible and worth changing lanes to right
-  if (lane == 0 && mid_cost < left_cost && mid_back_car.empty()) lane++;
-  if (lane == 1 && right_cost < mid_cost && right_cost <= left_cost && right_back_car.empty()) lane++;
+  if (lane == 0 && mid_cost < left_cost) lane++;
+  if (lane == 1 && right_cost < mid_cost && right_cost <= left_cost) lane++;
   // it's possible and worth changing lanes to left
-  if (lane == 2 && mid_cost < right_cost && mid_back_car.empty()) lane--;
-  if (lane == 1 && left_cost < mid_cost && left_cost < right_cost && left_back_car.empty()) lane--;
+  if (lane == 2 && mid_cost < right_cost) lane--;
+  if (lane == 1 && left_cost < mid_cost && left_cost < right_cost) lane--;
   
   vector<double> target_vehicle = get_vehicle(s, lane, sensor_fusion, prev_size, buffer);
   if (!target_vehicle.empty()) {
