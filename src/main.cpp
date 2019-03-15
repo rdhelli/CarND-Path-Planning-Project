@@ -14,62 +14,72 @@ using nlohmann::json;
 using std::string;
 using std::vector;
 
-// returns the absolute velocity of a vehicle
+/*
+* returns the absolute velocity of a vehicle in [m/s]
+*/
 double get_vehicle_speed(vector<double> vehicle) {
   return sqrt(vehicle[3]*vehicle[3] + vehicle[4]*vehicle[4]);
 }
 
-// returns the predicted distance in 's' coordinate to a vehicle
+/*
+* returns the predicted distance in to a vehicle along the 's' axis, in [m]
+*/
 double get_vehicle_dist(vector<double> vehicle, double s, int prev_size) {
   return ((vehicle[5] + (double)prev_size * .02 * get_vehicle_speed(vehicle)) - s);
 }
 
-// returns the closest vehicle in a given lane, that is within a distance buffer either forward or backward
+/*
+* returns the closest vehicle in a given lane, that is within a distance buffer either forward (+) or backward (-)
+*/
 vector<double> get_vehicle(double s,
                            int lane,
                            vector<vector<double>> sensor_fusion,
                            int prev_size,
                            double buffer) {
-  // find ref_v to use
   vector<vector<double>> found_vehicles;
   for (int i = 0; i < sensor_fusion.size(); i++) {
-    // car is in my lane
     float d = sensor_fusion[i][6];
     if (d < (2 + 4*lane + 2) && d > (2 + 4*lane - 2)) {
       double check_speed = get_vehicle_speed(sensor_fusion[i]);
       double check_dist = get_vehicle_dist(sensor_fusion[i], s, prev_size);
-      // check s values greater than mine and less than an s gap
-      // checking vehicles ahead
+      // check if vehicle is closer than the buffer
+      // >0 buffer for checking vehicles ahead
       if (buffer >= 0 && check_dist > 0 && check_dist < buffer){
         found_vehicles.push_back(sensor_fusion[i]);
       }
-      // buffer < 0, checking vehicles behind
+      // <0 buffer for checking vehicles behind
       else if (buffer < 0 && check_dist < 0 && check_dist > buffer){
         found_vehicles.push_back(sensor_fusion[i]);
       }
     }
   }
   // sort found vehicles based on s value
-  if (buffer >= 0) { // vehicles ahead of us
+  // for vehicles ahead of us
+  if (buffer >= 0) {
     std::sort(found_vehicles.begin(),
               found_vehicles.end(),
               [](const vector<double>& veh1, vector<double>& veh2) {
-      return veh1[5] < veh2[5]; // ascending order based on s, hence first element is closest
+      // ascending order based on s, hence first element is closest
+      return veh1[5] < veh2[5];
     });
-  } else { // vehicles behind us
+  }
+  // for vehicles behind us
+  else {
     std::sort(found_vehicles.begin(),
               found_vehicles.end(),
               [](const vector<double>& veh1, vector<double>& veh2) {
-      return veh1[5] > veh2[5]; // descending order based on s, hence first element is closest
+      // descending order based on s, hence first element is closest
+      return veh1[5] > veh2[5];
     });
   }
   vector<double> empty;
-  // std::cout << "found vehicles " << found_vehicles.size() << std::endl;
   if (found_vehicles.size() > 0) return found_vehicles.front();
   else return empty;
 }
 
-// Decides reference velocity and best lane, based on sensor fusion information
+/*
+* Decides reference velocity and best lane, based on sensor fusion information
+*/
 void behavior(double s,
               double d,
               vector<vector<double>> sensor_fusion,
@@ -81,18 +91,18 @@ void behavior(double s,
               double w_speed = 1.0,
               double w_stay = 5.0,
               double w_coll = 1000.0) {
-
+  // select closest vehicles within range in all directions
   vector<double> left_front_car = get_vehicle(s, 0, sensor_fusion, prev_size, buffer);
   vector<double> mid_front_car = get_vehicle(s, 1, sensor_fusion, prev_size, buffer);
   vector<double> right_front_car = get_vehicle(s, 2, sensor_fusion, prev_size, buffer);
   vector<double> left_back_car = get_vehicle(s, 0, sensor_fusion, prev_size, -buffer/3);
   vector<double> mid_back_car = get_vehicle(s, 1, sensor_fusion, prev_size, -buffer/3);
   vector<double> right_back_car = get_vehicle(s, 2, sensor_fusion, prev_size, -buffer/3);
-  
+  // cost for each lane
   double left_cost = 0.0;
   double mid_cost = 0.0;
   double right_cost = 0.0;
-  
+  // costs increase if a front car is too close or drive with low speed 
   if (!left_front_car.empty()) {
     left_cost += w_speed * (49.5 - 2.24*get_vehicle_speed(left_front_car));
     left_cost += w_dist / get_vehicle_dist(left_front_car, s, prev_size);
@@ -105,32 +115,45 @@ void behavior(double s,
     right_cost += w_speed * (49.5 - 2.24*get_vehicle_speed(right_front_car));
     right_cost += w_dist / get_vehicle_dist(right_front_car, s, prev_size);
   }
+  // cost decrease of ego lane, to discourage unnecessary lane changes
   if (lane == 0) left_cost -= w_stay;
   if (lane == 1) mid_cost -= w_stay;
   if (lane == 2) right_cost -= w_stay;
   
-  if (!left_back_car.empty()) left_cost += w_coll;
-  if (!mid_back_car.empty()) mid_cost += w_coll;
-  if (!right_back_car.empty()) right_cost += w_coll;
+  // considerable cost increase if a back car in another lane is close, to prevent collision
+  if (!left_back_car.empty() && lane != 0) left_cost += w_coll;
+  if (!mid_back_car.empty() && lane != 1) mid_cost += w_coll;
+  if (!right_back_car.empty() && lane != 2) right_cost += w_coll;
   
-  std::cout << left_cost << " " << mid_cost << " " << right_cost << std::endl;
+  // debugging costs in console
+  // std::cout << left_cost << " " << mid_cost << " " << right_cost << std::endl;
 
-  // it's possible and worth changing lanes to right
+  // lane selection
+  // check if worth changing to right
   if (lane == 0 && mid_cost < left_cost) lane++;
   if (lane == 1 && right_cost < mid_cost && right_cost <= left_cost) lane++;
-  // it's possible and worth changing lanes to left
+  // check if worth changing to left
   if (lane == 2 && mid_cost < right_cost) lane--;
   if (lane == 1 && left_cost < mid_cost && left_cost < right_cost) lane--;
   
-  vector<double> target_vehicle = get_vehicle(s, lane, sensor_fusion, prev_size, buffer);
+  // reference speed control
+  vector<double> target_vehicle;
+  switch(lane) {
+    case 0: target_vehicle = left_front_car;
+    case 1: target_vehicle = mid_front_car;
+    case 2: target_vehicle = right_front_car;
+  }
+  // when following a car
   if (!target_vehicle.empty()) {
     double target_speed = get_vehicle_speed(target_vehicle);
+    // set speed according to target
     if (ref_vel/2.24 > target_speed) {
       ref_vel -= .224;
     } else if (ref_vel/2.24 < target_speed - 0.5) {
       ref_vel += .224;
     }
   }
+  // when empty ahead, increase speed up to speed limit
   else if (ref_vel < 49.5) {
     ref_vel += .224;
   }
@@ -173,13 +196,11 @@ int main() {
     map_waypoints_dy.push_back(d_y);
   }
   
-  // TODO: Initializing parameters
   // start in lane 1
   int lane = 1;
   
-  // have a reference velocity to target
+  // start with zero reference to avoid jerk
   double ref_vel = 0.0; // mph
-  // END OF TODO
   
   h.onMessage([&ref_vel,&map_waypoints_x,&map_waypoints_y,&map_waypoints_s,
                &map_waypoints_dx,&map_waypoints_dy,&lane]
@@ -218,13 +239,15 @@ int main() {
           // Sensor Fusion Data, a list of all other cars on the same side of the road.
           vector<vector<double>> sensor_fusion = j[1]["sensor_fusion"];
           
-          // TODO: define a path made up of (x,y) points that the car will visit
+          // define a path made up of (x,y) points that the car will visit
 
+          // ego prediction along previous trajectory
           int prev_size = previous_path_x.size();
           if (prev_size > 0) {
             car_s = end_path_s;
           }
 
+          // select proper lane and speed, according to current state and other vehicles
           behavior(car_s, car_d, sensor_fusion, ref_vel, lane, prev_size);
           
           // Create a list of widely spaced (x,y) waypoints, evenly spaced at 30m
@@ -245,7 +268,8 @@ int main() {
             ptsx.push_back(car_x);
             ptsy.push_back(prev_car_y);
             ptsy.push_back(car_y);
-          } else { // use the previous path's end point as starting reference
+          } else {
+            // use the previous path's end point as starting reference
             // redefine reference state as previous path end point
             ref_x = previous_path_x[prev_size-1];
             ref_y = previous_path_y[prev_size-1];
@@ -316,8 +340,6 @@ int main() {
             next_x_vals.push_back(x_point);
             next_y_vals.push_back(y_point);
           }
-          
-          // END OF TODO
 
           json msgJson;
           msgJson["next_x"] = next_x_vals;
