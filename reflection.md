@@ -21,8 +21,8 @@ So far, the code is able to follow the empty road in a given lane with a smooth 
 First, I created some auxiliary functions, that provide relevant information about the surrounding travel. The `get_vehicle` function (seen on [line 34](https://github.com/rdhelli/CarND-Path-Planning-Project/blob/8818185bdb349ef0092e41d5c3cdf810b4b24829/src/main.cpp#L34)) gives us the vehicle that is closest to the Ego car in any selected lane, either forward or backward, within a selectable range. Then, I wrote the `behavior` function, which is responsible for setting a reference speed and a reference lane for the path planner (seen on [line 83](https://github.com/rdhelli/CarND-Path-Planning-Project/blob/8818185bdb349ef0092e41d5c3cdf810b4b24829/src/main.cpp#L83)). It assigns a cost to each lane, based on the following factors:
 
 * if there's a vehicle ahead,
- * the cost is higher, the slower the vehicle is (seen on [line 107](https://github.com/rdhelli/CarND-Path-Planning-Project/blob/8818185bdb349ef0092e41d5c3cdf810b4b24829/src/main.cpp#L107))
- * the cost is higher, the closer the vehicle is (seen on [line 108](https://github.com/rdhelli/CarND-Path-Planning-Project/blob/8818185bdb349ef0092e41d5c3cdf810b4b24829/src/main.cpp#L108))
+  * the cost is higher, the slower the vehicle is (seen on [line 107](https://github.com/rdhelli/CarND-Path-Planning-Project/blob/8818185bdb349ef0092e41d5c3cdf810b4b24829/src/main.cpp#L107))
+  * the cost is higher, the closer the vehicle is (seen on [line 108](https://github.com/rdhelli/CarND-Path-Planning-Project/blob/8818185bdb349ef0092e41d5c3cdf810b4b24829/src/main.cpp#L108))
 * the cost is lowered for the ego lane, to discourage too many lane changes (seen on [line 119](https://github.com/rdhelli/CarND-Path-Planning-Project/blob/8818185bdb349ef0092e41d5c3cdf810b4b24829/src/main.cpp#L119))
 * the cost is increased extensively, when another vehicle is closely behind in the other lanes (seen on [line 124](https://github.com/rdhelli/CarND-Path-Planning-Project/blob/8818185bdb349ef0092e41d5c3cdf810b4b24829/src/main.cpp#L124))
 
